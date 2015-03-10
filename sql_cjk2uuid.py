@@ -13,14 +13,13 @@ FILE_MODE = 'w'
 FETCH_SIZE = 10000
 TABLE_NAME = 'users'
 FIELD_NAME = 'user'
-MYSQL_DB  = ''
+MYSQL_DB  = ['host', 'user', 'password', 'db']
 
 def update_field(filename=FILE_NAME, filemode=FILE_MODE, size=FETCH_SIZE,
-     tablename=TABLE_NAME, fieldname=FIELD_NAME):
+    tablename=TABLE_NAME, fieldname=FIELD_NAME):
     affected_rows = 0
-    con = mdb.connect(*MYSQL_DB)
     with open(filename, filemode) as f:
-        with con:
+        with mdb.connect(*MYSQL_DB) as con:
             cur = con.cursor(mdb.cursors.DictCursor)
             cur.execute('select * from %s;' % tablename)
             while True:
@@ -43,8 +42,7 @@ def update_field(filename=FILE_NAME, filemode=FILE_MODE, size=FETCH_SIZE,
 
 def check_field(size=FETCH_SIZE, tablename=TABLE_NAME, fieldname=FIELD_NAME):
     affected_rows = 0
-    con = mdb.connect(*MYSQL_DB)
-    with con:
+    with mdb.connect(*MYSQL_DB) as con:
         cur = con.cursor(mdb.cursors.DictCursor)
         cur.execute('select * from %s;' % tablename)
         while True:
