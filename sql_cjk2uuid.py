@@ -19,7 +19,8 @@ def update_field(filename=FILE_NAME, filemode=FILE_MODE, size=FETCH_SIZE,
     tablename=TABLE_NAME, fieldname=FIELD_NAME):
     affected_rows = 0
     with open(filename, filemode) as f:
-        with mdb.connect(*MYSQL_DB) as con:
+        con = mdb.connect(*MYSQL_DB)
+        with con:
             cur = con.cursor(mdb.cursors.DictCursor)
             cur.execute('select * from %s;' % tablename)
             while True:
@@ -28,21 +29,22 @@ def update_field(filename=FILE_NAME, filemode=FILE_MODE, size=FETCH_SIZE,
                     break
                 for item in itemList:
                     try:
-                        item[fieldname].strip().decode('ascii')
-                    except UnicodeDecodeError, e:
+                        item[fieldname].encode('ascii')
+                    except UnicodeEncodeError, e:
                         affected_rows += 1
-                        username = '%s%s'.encode('utf-8') % ('USER', uuid.uuid4().hex[0:20].upper())
+                        username = '%s%s' % ('USER', uuid.uuid4().hex[0:20].upper())
                         cur.execute('UPDATE %s SET %s="%s" WHERE id=%ld;' % (
-                           tablename, fieldname, username, user['id']))
+                           tablename, fieldname, username, item['id']))
                         f.writelines('%s,%s,%s' % (
-                            user['id'], user[fieldname], username))
+                            item['id'], item[fieldname].encode('utf-8'), username))
                 con.commit()
                 f.flush()
     return affected_rows
 
 def check_field(size=FETCH_SIZE, tablename=TABLE_NAME, fieldname=FIELD_NAME):
     affected_rows = 0
-    with mdb.connect(*MYSQL_DB) as con:
+    con = mdb.connect(*MYSQL_DB)
+    with con:
         cur = con.cursor(mdb.cursors.DictCursor)
         cur.execute('select * from %s;' % tablename)
         while True:
@@ -51,8 +53,8 @@ def check_field(size=FETCH_SIZE, tablename=TABLE_NAME, fieldname=FIELD_NAME):
                 break
             for item in itemList:
                 try:
-                    item[fieldname].strip().decode('ascii')
-                except UnicodeDecodeError, e:
+                    item[fieldname].strip().encode('ascii')
+                except UnicodeEncodeError, e:
                     affected_rows += 1
     return affected_rows
 
